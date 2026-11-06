@@ -95,41 +95,6 @@ docker build -f frontend/Dockerfile -t tienda-service-frontend:latest .
 
 Se recomienda usar `docker compose up --build` para ejecutar ambos servicios juntos y configurar su red automáticamente.
 
-## Publicar las imágenes en GitHub Container Registry (GHCR)
-
-Si el profesor debe descargar las imágenes ya construidas, puedes publicarlas en GitHub Container Registry. Sustituye `TU_USUARIO` por tu nombre de usuario de GitHub. Crea un Personal Access Token con permisos para publicar paquetes y úsalo como contraseña cuando Docker lo solicite.
-
-```bash
-docker login ghcr.io -u TU_USUARIO
-docker tag tienda-service-backend:latest ghcr.io/TU_USUARIO/tiendaservice-backend:latest
-docker tag tienda-service-frontend:latest ghcr.io/TU_USUARIO/tiendaservice-frontend:latest
-docker push ghcr.io/TU_USUARIO/tiendaservice-backend:latest
-docker push ghcr.io/TU_USUARIO/tiendaservice-frontend:latest
-```
-
-Para que Compose descargue las imágenes publicadas en vez de construirlas localmente, se puede preparar una configuración de despliegue que use esas imágenes `ghcr.io/...`. No publiques tokens ni credenciales en el repositorio.
-
-## Publicar el código en GitHub
-
-Desde la carpeta del proyecto, si todavía no está conectada a un repositorio remoto:
-
-```bash
-git init
-git add .
-git commit -m "Preparar despliegue Docker Compose"
-git branch -M main
-git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
-git push -u origin main
-```
-
-Si el repositorio ya existe y tiene configurado `origin`, no repitas `git remote add origin`; utiliza:
-
-```bash
-git add .
-git commit -m "Actualizar despliegue Docker"
-git push
-```
-
 ## Notas importantes
 
 - `cliente.py` crea un usuario, dos productos y un pedido de demostración cuando se inicia el contenedor frontend. Como los datos de esta versión se guardan en memoria en el backend, se reinician al recrear el contenedor backend y no constituyen almacenamiento persistente.
