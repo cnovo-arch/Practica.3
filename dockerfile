@@ -18,6 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8501
 
 # Ponemos el comando de arranque
-CMD ["sh", "-c", "python cliente.py http://host.docker.internal:8000; exec streamlit run frontend.py --server.address=0.0.0.0 --server.port=8501"]
+CMD ["sh", "-c", "python cliente.py http://host.docker.internal:8000 -p; exec streamlit run frontend.py --server.address=0.0.0.0 --server.port=8501"]
 
 ## Se ejecuta cliente.py y el streamlit de frontend.py para que se pueda acceder y modificar la tienda
