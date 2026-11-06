@@ -1,115 +1,138 @@
-## Este nuevo proyecto conocido como Practica.3.1. muestra mi manejo básico en las herramientas de Git y GitHub
+# TiendaService — Tienda online con Docker
 
+Aplicación de tienda online desarrollada en Python. El despliegue separa la API REST (FastAPI) y la interfaz web (Streamlit) en **dos contenedores** conectados mediante Docker Compose.
 
-Mi nombre es Carlos Novo Moruja y la aplicación de Python que voy a desarrollar consiste en una tienda en la se añaden y se quitan una serie de productos y está formada por sus clases que representan la tienda, los productos, los tipos de usuarios que hay en esta tienda, y los pedidos.
+## Arquitectura
 
+- **backend**: API REST con FastAPI, expuesta en el puerto `8000`.
+- **frontend**: interfaz Streamlit, expuesta en el puerto `8501`. Al arrancar ejecuta primero `cliente.py` contra la API para realizar una demostración de las operaciones y después inicia la interfaz.
+- **models/** y **Services/**: clases de dominio y lógica de negocio que utiliza el backend.
+- **docker-compose.yml**: construye y coordina ambos servicios; espera a que el backend supere su comprobación de salud antes de arrancar el frontend.
 
-A continuación voy a especificar algunos de sus términos
+## Requisitos
 
+- Docker Desktop (Windows/macOS) o Docker Engine con el complemento Docker Compose.
+- Git, si se va a clonar el repositorio.
 
+No es necesario instalar Python ni las dependencias en el ordenador anfitrión para ejecutar el despliegue Docker.
 
-
-## 1.  Estructura del proyecto
-
-La estructura principal del proyecto es la siguiente:
+## Estructura relevante
 
 ```text
-tienda-online/
-├── models
-├── Services
-├── cliente.py
-├── frontend.py
-├── main.py
-├── requirements.txt
-├── Dockerfile
+TiendaService/
+├── backend/
+│   ├── Dockerfile
+│   ├── main.py
+│   ├── cliente.py
+│   └── requirements.txt
+├── frontend/
+│   ├── Dockerfile
+│   ├── frontend.py
+│   └── requirements.txt
+├── models/
+├── Services/
+├── docker-compose.yml
+├── .dockerignore
 ├── .gitignore
 └── README.md
 ```
 
-**Nota:** `main.py` es un nombre de ejemplo para el archivo que contiene la aplicación FastAPI.
+## Ejecutar desde la terminal
 
-## 2. Requisitos previos
+Abre una terminal en la carpeta raíz del proyecto, donde está `docker-compose.yml`.
 
-Para ejecutar el proyecto es necesario tener instalado:
-
-- Python 3.12 o una versión compatible con las dependencias del proyecto.
-- Docker Desktop.
-- Git, para clonar el repositorio.
-
-## 3. Ejecución del backend
-
-La API de FastAPI se ejecuta por separado del contenedor de la interfaz.
-
-Desde la carpeta del backend, inicia el servidor con:
+### 1. Construir las dos imágenes e iniciar los servicios
 
 ```bash
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
+docker compose up --build
 ```
 
-Si la rama por defecto del git es `master` u otro nombre distinto de `main`, sustituye `main` por ese nombre.
+La primera ejecución puede tardar unos minutos mientras Docker descarga la imagen base e instala las dependencias. La terminal mostrará los logs de ambos servicios.
 
-La documentación interactiva de la API estará disponible en:
+### 2. Abrir la aplicación
 
-http://localhost:8000/docs
+- **Interfaz de la tienda:** http://localhost:8501
+- **Documentación interactiva de la API:** http://localhost:8000/docs
 
-Mantén el servidor en ejecución mientras utilizas la tienda.
+La interfaz usa `http://backend:8000` para comunicarse con la API dentro de la red privada de Docker Compose. No cambies esa URL por `localhost` dentro del contenedor frontend: `localhost` apuntaría al propio contenedor frontend.
 
-## 5. Ejecución con Docker
+### 3. Comprobar el estado
 
-### 5.0. Obtención contenedor
-
-El contenedor está disponible en "doc", aunque descargarlo es sencillo si completas los siguientes pasos
-
-### 5.1. Construir la imagen
-
-Desde la carpeta raíz del proyecto, donde se encuentra el Dockerfile, ejecuta:
+En otra terminal, desde la carpeta del proyecto:
 
 ```bash
-docker build -t tienda-online .
+docker compose ps
+docker compose logs -f
 ```
 
-### 5.2. Iniciar el contenedor
-
-Con la API funcionando en el puerto 8000, ejecuta:
+Para consultar un servicio concreto:
 
 ```bash
-docker run --name tienda-ui -p 8501:8501 -e API_URL=http://host.docker.internal:8000 tienda-online
+docker compose logs -f backend
+docker compose logs -f frontend
 ```
 
-La variable `API_URL` configura la dirección de la API que utilizará la interfaz. En Docker Desktop para Windows, `host.docker.internal` permite acceder desde el contenedor a los servicios que se ejecutan en el ordenador anfitrión.
-
-### 5.3. Acceder a la interfaz gráfica
-
-Abre el siguiente enlace en el navegador:
-
-http://localhost:8501
-
-### 5.4. Detener y eliminar el contenedor
-
-Para detenerlo:
+### 4. Detener el despliegue
 
 ```bash
-docker stop tienda-ui
+docker compose down
 ```
 
-Para eliminarlo:
+Para reconstruir las imágenes después de modificar código:
 
 ```bash
-docker rm tienda-ui
+docker compose up --build
 ```
 
-Si necesitas volver a crearlo con el mismo nombre, primero debes eliminar el contenedor anterior.
+## Ejecutar el backend y frontend por separado (opcional)
 
-## 6. Cliente de pruebas
+También puedes construir las imágenes individualmente desde la raíz del proyecto:
 
-El archivo `cliente.py` realiza solicitudes HTTP a la API para comprobar operaciones relacionadas con usuarios, productos y pedidos.
+```bash
+docker build -f backend/Dockerfile -t tienda-service-backend:latest .
+docker build -f frontend/Dockerfile -t tienda-service-frontend:latest .
+```
 
-El cliente necesita que el backend esté disponible en la dirección configurada. Sus operaciones de creación pueden añadir registros a los datos de la aplicación, por lo que conviene revisar los datos antes de ejecutar las pruebas repetidamente.
+Se recomienda usar `docker compose up --build` para ejecutar ambos servicios juntos y configurar su red automáticamente.
 
-## 7. Consideraciones importantes
+## Publicar las imágenes en GitHub Container Registry (GHCR)
 
-- MI CONTENEDOR NO PERMITE DE MOMENTO LA EJECUCIÓN EN EL PROTOCOLO TCP/IP, SÓLO FUNCIONA EN LOCAL (Intentaré corregirlo para que se pueda ver desde cualquier dispositivo en HTTP)
-- El contenedor descrito en esta versión ejecuta el cliente de pruebas y la interfaz Streamlit.
-- La API de FastAPI se ejecuta por separado en el ordenador anfitrión.
-- El puerto `8000` se utiliza para la API y el puerto `8501` para la interfaz Streamlit.
-- No se deben subir contraseñas, tokens, credenciales ni archivos de configuración que contengan información privada.
+Si el profesor debe descargar las imágenes ya construidas, puedes publicarlas en GitHub Container Registry. Sustituye `TU_USUARIO` por tu nombre de usuario de GitHub. Crea un Personal Access Token con permisos para publicar paquetes y úsalo como contraseña cuando Docker lo solicite.
+
+```bash
+docker login ghcr.io -u TU_USUARIO
+docker tag tienda-service-backend:latest ghcr.io/TU_USUARIO/tiendaservice-backend:latest
+docker tag tienda-service-frontend:latest ghcr.io/TU_USUARIO/tiendaservice-frontend:latest
+docker push ghcr.io/TU_USUARIO/tiendaservice-backend:latest
+docker push ghcr.io/TU_USUARIO/tiendaservice-frontend:latest
+```
+
+Para que Compose descargue las imágenes publicadas en vez de construirlas localmente, se puede preparar una configuración de despliegue que use esas imágenes `ghcr.io/...`. No publiques tokens ni credenciales en el repositorio.
+
+## Publicar el código en GitHub
+
+Desde la carpeta del proyecto, si todavía no está conectada a un repositorio remoto:
+
+```bash
+git init
+git add .
+git commit -m "Preparar despliegue Docker Compose"
+git branch -M main
+git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
+git push -u origin main
+```
+
+Si el repositorio ya existe y tiene configurado `origin`, no repitas `git remote add origin`; utiliza:
+
+```bash
+git add .
+git commit -m "Actualizar despliegue Docker"
+git push
+```
+
+## Notas importantes
+
+- `cliente.py` crea un usuario, dos productos y un pedido de demostración cuando se inicia el contenedor frontend. Como los datos de esta versión se guardan en memoria en el backend, se reinician al recrear el contenedor backend y no constituyen almacenamiento persistente.
+- El cliente de demostración puede crear registros nuevos cada vez que se recrea el frontend. Si no quieres ejecutar la demostración automáticamente, elimina `python cliente.py http://backend:8000 &&` del `CMD` de `frontend/Dockerfile`.
+- Los puertos del anfitrión `8000` y `8501` deben estar libres. Si están ocupados, modifica la parte izquierda de la asignación en `ports`.
+- El `Dockerfile` de cada servicio usa el contexto de construcción de la raíz (`.`), porque el backend necesita copiar también `models/` y `Services/`.
