@@ -102,9 +102,35 @@ Se recomienda usar `docker compose up --build` para ejecutar ambos servicios jun
 
 El contenedor está disponible en "Packages", aunque descargarlo es sencillo si completas los siguientes pasos
 
-### 5.1. Construir la imagen
+### 5.1. Revisión
 
-Tienes que seguir los mismos pasos que desde el punto 1
+Mira que tengas los puertos 8000 y 8501 libres con:
+
+docker ps
+
+
+En caso de que alguno o los dos estén ocupados ejecuta:
+
+docker stop [NOMBRE_DEL_CONTENEDOR1] [NOMBRE_DEL_CONTENEDOR2] [...]
+
+### 5.2. Conjuntar las imágenes
+
+Tienes que coger el archivo: docker-compose-ghcr.yml y llevarlo a un directorio vacío, en el tienes que ejecutar los siguientes comandos para que despliegue la aplicación:
+
+1. docker compose -f docker-compose-ghcr.yml pull
+
+
+2. docker compose -f docker-compose-ghcr.yml up -d
+
+
+3. docker compose -f docker-compose-ghcr.yml ps
+
+Una vez ejecutados, la tienda debería estar disponible en http://localhost:8501 y la API en http://localhost:8000/docs.
+
+### 5.3. Detener el programa
+
+docker compose -f docker-compose-ghcr.yml down
+
 
 
 
