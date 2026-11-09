@@ -100,7 +100,7 @@ Se recomienda usar `docker compose up --build` para ejecutar ambos servicios jun
 
 ### 5.0. Obtención contenedor
 
-El contenedor está disponible en "Packages", aunque descargarlo es sencillo si completas los siguientes pasos
+El contenedor está disponible en "Packages", tienes que obtener previamente el archivo compose especifico en la última release. Tienes que completar, a mayores, los siguientes pasos
 
 ### 5.1. Revisión
 
